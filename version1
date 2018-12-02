@@ -1,0 +1,86 @@
+##to insert new python file use Select the project root in the Project tool window, and press Alt+Insert.
+import tensorflow as tf
+import pandas as pd
+import keras
+import numpy as np
+import matplotlib.pyplot as mpl
+
+#-----------------------------------------------------PREPROCESSING-----------------------------------------------------
+#Displays all the columns in the dataset
+desired_width=320
+pd.set_option("display.width", desired_width)
+pd.set_option("display.max_columns", 10)
+
+
+
+#opens csv with pandas
+df = pd.read_csv(r"C:\Users\user\Dropbox\Eric\Deep Learning\deeplearning\dataset\pima-indians-diabetes.csv", header=None)
+df.columns=["Pregnancies","Glucose","BloodPressure","SkinThickness","insulin","BMI","DiabetesPedigreeFunction","Age","Outcome"]
+####print(df.index.values["insulin"])
+# reports attributes and data types before filtering
+print(df.head(150))
+
+#print(df.value_counts())
+
+print(df.describe())
+
+##Remember:An outlier is a point which falls more than 1.5 times the interquartile range above the third quartile
+## or below the first quartile. find them using the box plot and then, KILL' em with fire.
+##interquartile range = Q3-Q1(75%-25%)
+
+##Lower Limit = Q1 – 1.5 IQR.
+##Upper Limit = Q3 + 1.5 IQR
+## Use the boxplot to visualize the outliers
+df.plot(kind="Box", figsize = (20,10))
+#df.sort_values(by="insulin",ascending=True)
+mpl.show()
+
+#df=df.sort_values(["insulin"],ascending=True)
+#print(df)
+
+##1.Removing outliers
+df= df[df["SkinThickness"]<80]
+df= df[df["insulin"]<=600]
+print(df.shape)
+
+df.plot(kind="Box", figsize = (20,10))
+#df.sort_values(by="insulin",ascending=True)
+mpl.show()
+
+##2.Replacing zero values with the mean
+df.loc[df["insulin"]==0,"insulin"] = df["insulin"].mean()
+df.loc[df["Glucose"]==0,"Glucose"] = df["Glucose"].mean()
+df.loc[df["BMI"]==0,"BMI"] = df["BMI"].mean()
+df.loc[df["BloodPressure"]==0,"BloodPressure"] = df["BloodPressure"].mean()
+df.loc[df["SkinThickness"]==0,"SkinThickness"] = df["SkinThickness"].mean()
+
+print(df.head(150))
+df.describe()
+#Exploring categories
+print(df["insulin"].value_counts())
+print(df["Glucose"].value_counts())
+print(df["BMI"].value_counts())
+print(df["Age"].value_counts())
+
+df.hist(bins=50,figsize=(20,15))
+mpl.show()
+#Saving our new filtered dataset free of the chosen outliers and the NUll values
+df.to_csv("PimaIndian_CleanedData_Eric_v01.csv")
+
+##3.Normalization (adjusting scales)
+df = df/df.max()
+print(df.head(15))
+df.to_csv("Normalized.csv")
+
+
+#----------------------------------------------------MODEL--------------------------------------------------------------
+
+def split_train_test(data,test_ratio):
+    shuffled_indices = np.random.permutation(len(data))
+    test_set_size = int(len(data) * test_ratio)
+    test_indices = shuffled_indices[test_set_size]
+    train_indices=shuffled_indices[test_set_size:]
+    return data.iloc[train_indices], data.iloc[test_indices]
+
+train_set,test_set= split_train_test(df,0.5)
+print(len(train_set), "train +",len(test_set),"test")
